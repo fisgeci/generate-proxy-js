@@ -7,25 +7,34 @@ let handler = {
     },
     set: (target, property, val) => {
         console.log("setting")
-        target[property] = val;
+        if (typeof val == 'object') {
+            console.log("here")
+            target[property] = makeItemAProxy(val);
+        } else {
+            target[property] = val;
+        }
     }
 }
 var jsonData = require('./testData.json');
 
 
 
-function makeLoggable(object, parentKey) {
+function makeLoggable(object) {
     let loggableObj = {};
     if (object instanceof Array) {
         loggableObj = []
         for (let element of object) {
-            loggableObj.push(generateProxy(element, parentKey, element));
+            if (typeof element == 'object') {
+                loggableObj.push(generateProxy(element));
+            } else {
+                loggableObj.push(element);
+            }
         }
     } else {
         loggableObj = {};
         for (const key of Object.keys(object)) {
             if (object[key] instanceof Object) {
-                loggableObj[key] = generateProxy(object, key, object[key])
+                loggableObj[key] = generateProxy(object[key])
             } else {
                 loggableObj[key] = object[key];
             }
@@ -36,9 +45,15 @@ function makeLoggable(object, parentKey) {
     return loggableObj;
 }
 
-function generateProxy(object, parentKey, value) {
+function makeItemAProxy(object) {
+    let proxy = makeLoggable(object);
+    return new Proxy(proxy, handler);
+
+}
+
+function generateProxy(value) {
     if (hasObject(value)) {
-        return new Proxy(makeLoggable(value, parentKey), handler);
+        return new Proxy(makeLoggable(value), handler);
     } else {
         return new Proxy(value, handler);
     }
@@ -53,9 +68,10 @@ function hasObject(object) {
     }
     return hasObject;
 }
-jsonData = makeLoggable(jsonData);
 
-jsonData[0];
-jsonData[0].friends = { "test": "HELLo" }
+jsonData = makeItemAProxy(jsonData);
 
-console.log(jsonData[0].friends)
+
+jsonData[0].friends = ["TESt", "TEST"];
+
+jsonData[0].friends[0]
