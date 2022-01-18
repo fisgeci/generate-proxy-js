@@ -1,7 +1,8 @@
 let handler = {
     get: (target, property) => {
 
-        console.log((property))
+
+        console.log(target[property], "Getting")
         return target[property];
     },
     set: (target, property, val) => {
@@ -9,18 +10,16 @@ let handler = {
         target[property] = val;
     }
 }
-
 var jsonData = require('./testData.json');
 
 
 
 function makeLoggable(object, parentKey) {
     let loggableObj = {};
-
     if (object instanceof Array) {
-        loggableObj[parentKey] = []
+        loggableObj = []
         for (let element of object) {
-            loggableObj[parentKey].push(generateProxy(element, parentKey, element));
+            loggableObj.push(generateProxy(element, parentKey, element));
         }
     } else {
         loggableObj = {};
@@ -29,12 +28,12 @@ function makeLoggable(object, parentKey) {
                 loggableObj[key] = generateProxy(object, key, object[key])
             } else {
                 loggableObj[key] = object[key];
-
             }
         }
     }
 
-    return new Proxy(loggableObj, handler);
+
+    return loggableObj;
 }
 
 function generateProxy(object, parentKey, value) {
@@ -54,8 +53,9 @@ function hasObject(object) {
     }
     return hasObject;
 }
+jsonData = makeLoggable(jsonData);
 
-jsonData = makeLoggable(jsonData, "root");
+jsonData[0];
+jsonData[0].friends = { "test": "HELLo" }
 
-// console.log((jsonData.root[0].test.test2[0]));
-console.log(jsonData.root[1].test);
+console.log(jsonData[0].friends)
