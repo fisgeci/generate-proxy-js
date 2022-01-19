@@ -1,54 +1,44 @@
 let handler = {
     get: (target, property) => {
-
-
-        console.log(target[property], "Getting")
         return target[property];
     },
     set: (target, property, val) => {
-        console.log("setting")
         if (typeof val == 'object') {
-            console.log("here")
             target[property] = makeItemAProxy(val);
         } else {
             target[property] = val;
         }
+        return true;
     }
 }
-var jsonData = require('./testData.json');
 
+export function makeItemAProxy(object) {
+    object = makeLoggable(object);
+    return new Proxy(object, handler);
 
+}
 
 function makeLoggable(object) {
-    let loggableObj = {};
     if (object instanceof Array) {
-        loggableObj = []
         for (let element of object) {
+            let index = 0;
             if (typeof element == 'object') {
-                loggableObj.push(generateProxy(element));
+                object[index] = generateProxy(element);
+                index++;
             } else {
                 loggableObj.push(element);
             }
         }
     } else {
-        loggableObj = {};
         for (const key of Object.keys(object)) {
             if (object[key] instanceof Object) {
-                loggableObj[key] = generateProxy(object[key])
+                object[key] = generateProxy(object[key])
             } else {
-                loggableObj[key] = object[key];
+                object[key] = object[key];
             }
         }
     }
-
-
-    return loggableObj;
-}
-
-function makeItemAProxy(object) {
-    let proxy = makeLoggable(object);
-    return new Proxy(proxy, handler);
-
+    return object;
 }
 
 function generateProxy(value) {
@@ -68,10 +58,3 @@ function hasObject(object) {
     }
     return hasObject;
 }
-
-jsonData = makeItemAProxy(jsonData);
-
-
-jsonData[0].friends = ["TESt", "TEST"];
-
-jsonData[0].friends[0]
